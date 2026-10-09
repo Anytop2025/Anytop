@@ -74,7 +74,8 @@ class AnyTop(nn.Module):
         timesteps_emb = create_sin_embedding(timesteps.view(1, -1, 1), self.latent_dim)[0]
         x = self.input_process(x, tpos_first_frame, y['joints_names_embs'], y['crop_start_ind']) # applies linear layer on each frame to convert it to latent dim
         spatial_mask = 1.0 - joints_mask[:, 0, 0, 1:, 1:]
-        spatial_mask = spatial_mask.unsqueeze(1).unsqueeze(1).repeat(1, nframes + 1, self.num_heads, 1, 1).reshape(-1,self.num_heads, njoints, njoints)
+        # Spatial attention flattens (frame, batch), including the T-pose frame.
+        spatial_mask = spatial_mask.unsqueeze(0).unsqueeze(2).repeat(nframes + 1, 1, self.num_heads, 1, 1).reshape(-1,self.num_heads, njoints, njoints)
         temporal_mask = 1.0 - temp_mask.repeat(1, njoints, self.num_heads, 1, 1).reshape(-1, nframes + 1, nframes + 1).float()
         spatial_mask[spatial_mask == 1.0] = -1e9
         temporal_mask[temporal_mask == 1.0] = -1e9
